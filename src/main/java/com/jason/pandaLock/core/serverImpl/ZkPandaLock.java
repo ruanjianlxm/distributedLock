@@ -1,6 +1,7 @@
 package com.jason.pandaLock.core.serverImpl;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -18,6 +19,7 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
 import com.jason.pandaLock.core.exception.ConnectException;
+import com.jason.pandaLock.core.exception.InitialException;
 import com.jason.pandaLock.core.exception.PandaLockException;
 import com.jason.pandaLock.core.server.DistributedLock;
 
@@ -65,11 +67,11 @@ public class ZkPandaLock extends DistributedLock {
 	private String waitCompetitorPath = null;
 
 	@Override
-	public boolean releaseLock() throws PandaLockException {
+	public void releaseLock()  {
 		if (StringUtils.isBlank(rootPath) || StringUtils.isBlank(lockName)
 				|| pandaZk == null) {
-			throw new PandaLockException(
-					"you can not release anyLock before you dit not connectZookeeper");
+			throw new InitialException(
+					"you can not release anyLock before you dit not initial connectZookeeper");
 		}
 		try {
 			
@@ -77,27 +79,31 @@ public class ZkPandaLock extends DistributedLock {
 		  
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
+			throw new ConnectException(
+					"the release lock has been Interrupted ");
 		} catch (KeeperException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
+			throw new ConnectException(
+					"zookeeper connect error");
 		}
 
-		return true;
 	}
 
 	@Override
-	public boolean tryLock() throws PandaLockException, KeeperException,
-			InterruptedException {
+	public boolean tryLock(){
 		if (StringUtils.isBlank(rootPath) || StringUtils.isBlank(lockName)
 				|| pandaZk == null) {
-			throw new PandaLockException(
-					"you can not tryLock anyone before you dit not connectZookeeper");
+			throw new InitialException(
+					"you can not tryLock anyone before you dit not initial connectZookeeper");
 		}
+		List<String> allCompetitorList = null;
+		try {
 		createComPrtitorNode();
-		List<String> allCompetitorList = pandaZk.getChildren(lockPath, false);
+		allCompetitorList = pandaZk.getChildren(lockPath, false);
+		} catch (KeeperException e) {
+			throw new ConnectException("zookeeper connect error");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		Collections.sort(allCompetitorList);
 		int index = allCompetitorList.indexOf(thisCompetitorPath
 				.substring((lockPath + SEPARATOR).length()));
@@ -111,14 +117,21 @@ public class ZkPandaLock extends DistributedLock {
 	}
 
 	@Override
-	public void lock() throws KeeperException, InterruptedException, PandaLockException {
+	public void lock(){
 		if (StringUtils.isBlank(rootPath) || StringUtils.isBlank(lockName)
 				|| pandaZk == null) {
-			throw new PandaLockException(
+			throw new InitialException(
 					"you can not lock anyone before you dit not connectZookeeper");
 		}
+		List<String> allCompetitorList = null;
+		try {
 		createComPrtitorNode();
-		List<String> allCompetitorList = pandaZk.getChildren(lockPath, false);
+			allCompetitorList = pandaZk.getChildren(lockPath, false);
+		} catch (KeeperException e) {
+			throw new ConnectException("zookeeper connect error");
+		} catch (InterruptedException e) {
+			throw new ConnectException("the lock has  been Interrupted");
+		}
 		Collections.sort(allCompetitorList);
 		int index = allCompetitorList.indexOf(thisCompetitorPath
 				.substring((lockPath + SEPARATOR).length()));
@@ -129,20 +142,28 @@ public class ZkPandaLock extends DistributedLock {
 		} else {// 说明自己不是最小节点
 			waitCompetitorPath = lockPath+SEPARATOR + allCompetitorList.get(index - 1);
              // 在waitPath上注册监听器, 当waitPath被删除时, zookeeper会回调监听器的process方法
-            Stat waitNodeStat= pandaZk.exists(waitCompetitorPath, new Watcher() {
-				@Override
-				public void process(WatchedEvent event) {
-					if (event.getType().equals(EventType.NodeDeleted)&&event.getPath().equals(waitCompetitorPath)) {
-						getTheLocklatch.countDown();
+            Stat waitNodeStat;
+			try {
+				waitNodeStat = pandaZk.exists(waitCompetitorPath, new Watcher() {
+					@Override
+					public void process(WatchedEvent event) {
+						if (event.getType().equals(EventType.NodeDeleted)&&event.getPath().equals(waitCompetitorPath)) {
+							getTheLocklatch.countDown();
+						}
 					}
-				}
-			});
-            if (waitNodeStat==null) {//如果运行到此处发现前面一个节点已经不存在了。说明前面的进程已经释放了锁
-            	return;
-			}else {
-				getTheLocklatch.await();
-				return;
+				});
+				 if (waitNodeStat==null) {//如果运行到此处发现前面一个节点已经不存在了。说明前面的进程已经释放了锁
+		            	return;
+					}else {
+						getTheLocklatch.await();
+						return;
+					}
+			} catch (KeeperException e) {
+				throw new ConnectException("zookeeper connect error");
+			} catch (InterruptedException e) {
+				throw new ConnectException("the lock has  been Interrupted");
 			}
+           
              
 		}
 
@@ -168,8 +189,8 @@ public class ZkPandaLock extends DistributedLock {
 	}
 
 	public void connectZooKeeper(String zkhosts, String lockName)
-			throws ConnectException, KeeperException, InterruptedException,
-			IOException, PandaLockException {
+			throws KeeperException, InterruptedException,
+			IOException {
 		Stat rootStat = null;
 		Stat lockStat = null;
 		if (StringUtils.isBlank(zkhosts)) {

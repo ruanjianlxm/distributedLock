@@ -4,7 +4,7 @@ package com.jason.pandaLock.core.exception;
  * @version 创建时间：2015年9月11日 下午4:58:26
  * 类说明  当节点出现不存在时抛出此异常
  */
-public class NodeNotExistsException extends Exception {
+public class NodeNotExistsException extends PandaLockException {
 
 	/**
 	 * 

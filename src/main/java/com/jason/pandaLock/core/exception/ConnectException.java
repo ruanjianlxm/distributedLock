@@ -4,7 +4,7 @@ package com.jason.pandaLock.core.exception;
  * @version 创建时间：2015年9月11日 下午10:31:47
  * 类说明
  */
-public class ConnectException extends Exception {
+public class ConnectException extends PandaLockException {
 
 	/**
 	 * 

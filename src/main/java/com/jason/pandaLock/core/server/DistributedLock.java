@@ -2,6 +2,7 @@ package com.jason.pandaLock.core.server;
 
 import org.apache.zookeeper.KeeperException;
 
+import com.jason.pandaLock.core.exception.ConnectException;
 import com.jason.pandaLock.core.exception.PandaLockException;
 
 /**
@@ -16,14 +17,13 @@ public abstract class DistributedLock {
 	 * @throws KeeperException 
 	 * @throws InterruptedException 
 	 */
-	public abstract boolean releaseLock() throws PandaLockException, InterruptedException, KeeperException;
+	public abstract void releaseLock();
 	/**
 	 * 尝试获得锁，能获得就立马获得锁，如果不能获得就立马返回
 	 * @throws PandaLockException 
-	 * @throws InterruptedException 
-	 * @throws KeeperException 
+	 * @throws ConnectException 
 	 */
-	public abstract boolean tryLock() throws PandaLockException, KeeperException, InterruptedException ;
+	public abstract boolean tryLock();
 	/**
 	 * 尝试获得锁，如果有锁就返回，如果没有锁就等待，如果等待了一段时间后还没能获取到锁，那么就返回
 	 * @param timeout 单位：秒
@@ -33,18 +33,8 @@ public abstract class DistributedLock {
 	/**
 	 * 尝试获得锁，一直阻塞，直到获得锁为止
 	 * @param timeout 单位：秒
-	 * @throws InterruptedException 
-	 * @throws KeeperException 
 	 * @throws PandaLockException 
+	 * @throws ConnectException 
 	 */
-	public abstract void lock() throws KeeperException, InterruptedException, PandaLockException;
-	public void lock(String msg) throws KeeperException, InterruptedException,
-			PandaLockException {
-		// TODO Auto-generated method stub
-		
-	}
-	public boolean releaseLock(String msg) throws PandaLockException {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	public abstract void lock() ;
 }
