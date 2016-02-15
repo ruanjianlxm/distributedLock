@@ -2,9 +2,6 @@ package com.jason.distributedlock;
 
 import java.io.IOException;
 
-import org.apache.zookeeper.KeeperException;
-
-import com.jason.pandaLock.core.exception.ConnectException;
 import com.jason.pandaLock.core.exception.PandaLockException;
 import com.jason.pandaLock.core.serverImpl.ZkPandaLock;
 
@@ -13,7 +10,7 @@ import com.jason.pandaLock.core.serverImpl.ZkPandaLock;
  */
 public class LockTest 
 {
-	public static void main(String[] args) throws IOException, KeeperException, InterruptedException, ConnectException, PandaLockException {
+	public static void main(String[] args) throws IOException, InterruptedException, PandaLockException {
 		//ZkPandaLock zkPandaLock = new ZkPandaLock();
 		//zkPandaLock.connectZooKeeper("127.0.0.1:2181", "jason");
 	/*	boolean tryLockResult = ZkPandaLock.tryLock();

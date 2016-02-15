@@ -1,11 +1,9 @@
 package com.jason.pandaLock.core.serverImpl;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.zookeeper.CreateMode;
@@ -18,8 +16,6 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.Stat;
 
-import com.jason.pandaLock.core.exception.ConnectException;
-import com.jason.pandaLock.core.exception.InitialException;
 import com.jason.pandaLock.core.exception.PandaLockException;
 import com.jason.pandaLock.core.server.DistributedLock;
 
@@ -70,7 +66,7 @@ public class ZkPandaLock extends DistributedLock {
 	public void releaseLock()  {
 		if (StringUtils.isBlank(rootPath) || StringUtils.isBlank(lockName)
 				|| pandaZk == null) {
-			throw new InitialException(
+			throw new PandaLockException(
 					"you can not release anyLock before you dit not initial connectZookeeper");
 		}
 		try {
@@ -79,10 +75,10 @@ public class ZkPandaLock extends DistributedLock {
 		  
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
-			throw new ConnectException(
+			throw new PandaLockException(
 					"the release lock has been Interrupted ");
 		} catch (KeeperException e) {
-			throw new ConnectException(
+			throw new PandaLockException(
 					"zookeeper connect error");
 		}
 
@@ -92,7 +88,7 @@ public class ZkPandaLock extends DistributedLock {
 	public boolean tryLock(){
 		if (StringUtils.isBlank(rootPath) || StringUtils.isBlank(lockName)
 				|| pandaZk == null) {
-			throw new InitialException(
+			throw new PandaLockException(
 					"you can not tryLock anyone before you dit not initial connectZookeeper");
 		}
 		List<String> allCompetitorList = null;
@@ -100,7 +96,7 @@ public class ZkPandaLock extends DistributedLock {
 		createComPrtitorNode();
 		allCompetitorList = pandaZk.getChildren(lockPath, false);
 		} catch (KeeperException e) {
-			throw new ConnectException("zookeeper connect error");
+			throw new PandaLockException("zookeeper connect error");
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -120,7 +116,7 @@ public class ZkPandaLock extends DistributedLock {
 	public void lock(){
 		if (StringUtils.isBlank(rootPath) || StringUtils.isBlank(lockName)
 				|| pandaZk == null) {
-			throw new InitialException(
+			throw new PandaLockException(
 					"you can not lock anyone before you dit not connectZookeeper");
 		}
 		List<String> allCompetitorList = null;
@@ -128,9 +124,9 @@ public class ZkPandaLock extends DistributedLock {
 		createComPrtitorNode();
 			allCompetitorList = pandaZk.getChildren(lockPath, false);
 		} catch (KeeperException e) {
-			throw new ConnectException("zookeeper connect error");
+			throw new PandaLockException("zookeeper connect error");
 		} catch (InterruptedException e) {
-			throw new ConnectException("the lock has  been Interrupted");
+			throw new PandaLockException("the lock has  been Interrupted");
 		}
 		Collections.sort(allCompetitorList);
 		int index = allCompetitorList.indexOf(thisCompetitorPath
@@ -159,9 +155,9 @@ public class ZkPandaLock extends DistributedLock {
 						return;
 					}
 			} catch (KeeperException e) {
-				throw new ConnectException("zookeeper connect error");
+				throw new PandaLockException("zookeeper connect error");
 			} catch (InterruptedException e) {
-				throw new ConnectException("the lock has  been Interrupted");
+				throw new PandaLockException("the lock has  been Interrupted");
 			}
            
              
@@ -194,10 +190,10 @@ public class ZkPandaLock extends DistributedLock {
 		Stat rootStat = null;
 		Stat lockStat = null;
 		if (StringUtils.isBlank(zkhosts)) {
-			throw new ConnectException("zookeeper hosts can not be blank");
+			throw new PandaLockException("zookeeper hosts can not be blank");
 		}
 		if (StringUtils.isBlank(lockName)) {
-			throw new ConnectException("lockName can not be blank");
+			throw new PandaLockException("lockName can not be blank");
 		}
 		if (pandaZk == null) {
 			pandaZk = new ZooKeeper(zkhosts, DEFAULT_SESSION_TIMEOUT,

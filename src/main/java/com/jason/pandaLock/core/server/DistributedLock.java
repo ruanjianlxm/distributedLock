@@ -2,7 +2,6 @@ package com.jason.pandaLock.core.server;
 
 import org.apache.zookeeper.KeeperException;
 
-import com.jason.pandaLock.core.exception.ConnectException;
 import com.jason.pandaLock.core.exception.PandaLockException;
 
 /**
